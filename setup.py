@@ -75,10 +75,11 @@ def download_models() -> None:
             print(os.listdir(tempdir))
             for item in archive.namelist():
                 source_path = pathlib.Path(tempdir) / item / "models"
-                if source_path.exists():
-                    shutil.move(source_path, MODELS_PATH)
+                destination_path = MODELS_PATH / item
+                if source_path.exists() and not destination_path.exists():
+                    shutil.move(source_path, destination_path)
                 else:
-                    print(f"Directory {source_path} does not exist")
+                    print(f"Directory {source_path} does not exist or {destination_path} already exists")
 
     # remove the temporary files/dirs
     rife_ncnn_vulkan_zip.unlink()
