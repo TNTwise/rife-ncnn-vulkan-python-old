@@ -72,6 +72,7 @@ def download_models() -> None:
     with zipfile.ZipFile(rife_ncnn_vulkan_zip) as archive:
         with tempfile.TemporaryDirectory() as tempdir:
             archive.extractall(tempdir)
+            print(os.listdir(tempdir))
             shutil.move(
                 pathlib.Path(tempdir) / archive.namelist()[0] / "models", MODELS_PATH
             )
