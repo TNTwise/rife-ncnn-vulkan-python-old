@@ -5,18 +5,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: ['3.9', '3.10', '3.11', '3.12']
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel twine cmake_build_extension ninja requests
         pip install .
 
     - name: Run tests
@@ -28,7 +28,7 @@ jobs:
         # Add commands to build your project here.
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
