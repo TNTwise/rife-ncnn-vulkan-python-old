@@ -4,6 +4,11 @@ Windows only cuz I cba to figure out why Mac and Linux won't build.
 
 Credit to the creators and maintainers
 
+Install through pypi
+```bash
+pip install rife-ncnn-vulkan-python-TAS
+```
+
 ## Introduction
 [rife-ncnn-vulkan](https://github.com/nihui/rife-ncnn-vulkan) is nihui's ncnn implementation of Real-Time Intermediate Flow Estimation for Video Frame Interpolation.
 
