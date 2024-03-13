@@ -14,9 +14,7 @@ Last Modified: August 17, 2021
 import importlib
 import pathlib
 import sys
-
-# third-party imports
-from PIL import Image
+import numpy as np
 
 # local imports
 if __package__ is None:
@@ -76,36 +74,26 @@ class Rife:
         else:
             raise FileNotFoundError(f"{model_dir} not found")
 
-    def process(self, image0: Image, image1: Image, timestep: float = 0.5) -> Image:
-        # Return the image immediately instead of doing the copy in the upstream part which cause black output problems
-        # The reason is that the upstream code use ncnn::Mat::operator=(const Mat& m) does a reference copy which won't
-        # change our OutImage data.
-        if timestep == 0.:
-            return image0
-        elif timestep == 1.:
-            return image1
-
+    def process(self, image0, image1, timestep = 0.5):
         image0_bytes = bytearray(image0.tobytes())
         image1_bytes = bytearray(image1.tobytes())
-        channels = int(len(image0_bytes) / (image0.width * image0.height))
-        output_bytes = bytearray(len(image0_bytes))
+        channels = image0.shape[2] if image0.ndim == 3 else 1
+        output_bytes = bytearray(image0.nbytes)
 
-        # convert image bytes into ncnn::Mat Image
         raw_in_image0 = wrapped.Image(
-            image0_bytes, image0.width, image0.height, channels
+            image0_bytes, image0.shape[1], image0.shape[0], channels
         )
         raw_in_image1 = wrapped.Image(
-            image1_bytes, image1.width, image1.height, channels
+            image1_bytes, image1.shape[1], image1.shape[0], channels
         )
         raw_out_image = wrapped.Image(
-            output_bytes, image0.width, image0.height, channels
+            output_bytes, image0.shape[1], image0.shape[0], channels
         )
 
         self._rife_object.process(raw_in_image0, raw_in_image1, timestep, raw_out_image)
-        return Image.frombytes(
-            image0.mode, (image0.width, image0.height), bytes(output_bytes)
-        )
 
+        output_np = np.frombuffer(output_bytes, dtype=image0.dtype).reshape(image0.shape)
+        return output_np
 
 class RIFE(Rife):
     ...
