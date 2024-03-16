@@ -20,7 +20,10 @@ import numpy as np
 if __package__ is None:
     import rife_ncnn_vulkan_wrapper as wrapped
 else:
-    wrapped = importlib.import_module(f"{__package__}.rife_ncnn_vulkan_wrapper")
+    try:
+        wrapped = importlib.import_module(f"{__package__}.rife_ncnn_vulkan_wrapper")
+    except ImportError:
+        wrapped = importlib.import_module(f"{__package__}_TAS.rife_ncnn_vulkan_wrapper")
 
 
 class Rife:
