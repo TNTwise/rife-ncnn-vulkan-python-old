@@ -6,6 +6,5 @@ requires = [
   "cmake-build-extension",
   "cmake>=3.9",
   "requests",
-  "numpy",
 ]
 build-backend = "setuptools.build_meta"
