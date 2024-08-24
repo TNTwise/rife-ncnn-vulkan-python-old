@@ -7,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import zipfile
+import platform
 
 # the directory that contains all RIFE models
 # required only for building wheels
@@ -16,6 +17,11 @@ MODELS_PATH = (
     / "rife-ncnn-vulkan"
     / "models"
 )
+ROOT_PATH = (
+    pathlib.Path(__file__).parent
+    / "rife_ncnn_vulkan_python"
+)
+DLL_PATH = ROOT_PATH /  "vcomp140.dll"
 
 # HACK: allows pip to load user site packages when running setup
 if "PYTHONNOUSERSITE" in os.environ:
@@ -35,10 +41,14 @@ sys.path.append(
     )
 )
 
+
+
 # external modules must be imported after the hack
 import cmake_build_extension
 import requests
-
+# Ensure the DLL file exists in the correct location
+if not DLL_PATH.exists():
+    raise FileNotFoundError(f"vcomp.dll not found at {DLL_PATH}")
 
 def download(url, chunk_size=4096):
     # create a temporary file to contain the downloaded file
@@ -66,23 +76,17 @@ def download(url, chunk_size=4096):
 
 def download_models() -> None:
     rife_ncnn_vulkan_zip = download(
-        "https://github.com/NevermindNilas/TAS-Modes-Host/releases/download/main/rife-ncnn-models.zip"
+        "https://github.com/nihui/rife-ncnn-vulkan/archive/"
+        "c806e66490679aebc1b4a6832985e004fd552f46.zip"
     )
 
     with zipfile.ZipFile(rife_ncnn_vulkan_zip) as archive:
         with tempfile.TemporaryDirectory() as tempdir:
             archive.extractall(tempdir)
-            print(os.listdir(tempdir))
-            for item in archive.namelist():
-                source_path = pathlib.Path(tempdir) / item / "models"
-                destination_path = MODELS_PATH / item
-                if source_path.exists() and not destination_path.exists():
-                    shutil.move(source_path, destination_path)
-                else:
-                    print(f"Directory {source_path} does not exist or {destination_path} already exists")
+            shutil.move(
+                pathlib.Path(tempdir) / archive.namelist()[0] / "models", MODELS_PATH
+            )
 
-    # remove the temporary files/dirs
-    rife_ncnn_vulkan_zip.unlink()
 
 cmake_flags = [
     "-DBUILD_SHARED_LIBS:BOOL=OFF",
@@ -91,23 +95,45 @@ cmake_flags = [
 cmake_flags.extend(os.environ.get("CMAKE_FLAGS", "").split())
 
 # when building bdist wheels/installing the package
-if sys.argv[1] == "bdist_wheel":
 
     # if the models are not present
     # download and extract the models from nihui/rife-ncnn-vulkan
-    if not MODELS_PATH.exists():
-        download_models()
+if not MODELS_PATH.exists():
+    #download_models()
+    os.mkdir(MODELS_PATH)
 
+shutil.rmtree(MODELS_PATH)
+os.mkdir(MODELS_PATH)
 
+# Detect the platform and set appropriate flags
+if platform.system() == "Windows":
+    cmake_flags.append("-DPLATFORM_WINDOWS=ON")
+else:
+    cmake_flags.append("-DPLATFORM_WINDOWS=OFF")
+
+# Ensure the models directory exists
+if not MODELS_PATH.exists():
+    os.mkdir(MODELS_PATH)
+
+# Optionally download and extract models if not present
+# Commented out to prevent automatic downloading unless necessary
+# download_models()
+
+# Clean and recreate the models directory
+shutil.rmtree(MODELS_PATH)
+os.mkdir(MODELS_PATH)
+
+# Setup the Python package
 setuptools.setup(
     ext_modules=[
         cmake_build_extension.CMakeExtension(
-            name="rife-ncnn-vulkan-python",
+            name="rife-ncnn-vulkan-python-tntwise",
             install_prefix="rife_ncnn_vulkan_python",
-            write_top_level_init="from .rife_ncnn_vulkan import Rife, RIFE, wrapped",
+            write_top_level_init="from .rife_ncnn_vulkan import Rife, RIFE, RifeWrapped, get_gpu_count",
             source_dir=str(pathlib.Path(__file__).parent / "rife_ncnn_vulkan_python"),
             cmake_configure_options=cmake_flags,
         )
     ],
     cmdclass={"build_ext": cmake_build_extension.BuildExtension},
+    install_requires=["numpy"],
 )

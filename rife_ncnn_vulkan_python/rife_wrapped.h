@@ -1,37 +1,35 @@
-#ifndef RIFE_NCNN_VULKAN_RIFEWRAPPER_H
-#define RIFE_NCNN_VULKAN_RIFEWRAPPER_H
-#include "rife.h"
+#include <pybind11/include/pybind11/pybind11.h>
+#include <pybind11/include/pybind11/numpy.h>
+#include <pybind11/include/pybind11/stl.h>
+git 
+namespace py = pybind11;
 
-// wrapper class of ncnn::Mat
-typedef struct Image {
-    unsigned char *data;
+// Convert Image structure to use NumPy arrays
+struct Image {
+    py::array_t<unsigned char> data;
     int w;
     int h;
     int elempack;
-    Image(unsigned char *d, int w, int h, int channels)
-    {
-        this->data = d;
-        this->w = w;
-        this->h = h;
-        this->elempack = channels;
-    }
 
-} Image;
-
-union StringType {
-    std::string *str;
-    std::wstring *wstr;
+    Image(py::array_t<unsigned char> d, int width, int height, int channels)
+        : data(d), w(width), h(height), elempack(channels) {}
 };
 
-class RifeWrapped : public RIFE
-{
-  public:
-    RifeWrapped(int gpuid, bool _tta_mode, bool _tta_temporal_mode, bool _uhd_mode, int _num_threads,
-                bool _rife_v2, bool _rife_v4);
-    int load(const StringType &modeldir);
-    int process(const Image &inimage0, const Image &inimage1, float timestamp,
-                Image &outimage);
-};
+PYBIND11_MODULE(rife_module, m) {
+    py::class_<Image>(m, "Image")
+        .def(py::init<py::array_t<unsigned char>, int, int, int>())
+        .def_readwrite("data", &Image::data)
+        .def_readwrite("w", &Image::w)
+        .def_readwrite("h", &Image::h)
+        .def_readwrite("elempack", &Image::elempack);
 
-int get_gpu_count();
-#endif // RIFE_NCNN_VULKAN_RIFEWRAPPER_H
+    py::class_<RifeWrapped, RIFE>(m, "RifeWrapped")
+        .def(py::init<int, bool, bool, bool, int, bool, bool>(),
+             py::arg("gpuid"), py::arg("tta_mode"), py::arg("tta_temporal_mode"),
+             py::arg("uhd_mode"), py::arg("num_threads"), py::arg("rife_v2"),
+             py::arg("rife_v4"))
+        .def("load", &RifeWrapped::load)
+        .def("process", &RifeWrapped::process);
+
+    m.def("get_gpu_count", &get_gpu_count, "Get the number of available GPUs");
+}

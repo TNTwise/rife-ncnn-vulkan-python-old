@@ -1,3 +1,23 @@
+Metadata-Version: 2.1
+Name: rife-ncnn-vulkan-python
+Version: 1.4.0
+Summary: A Python FFI of nihui/rife-ncnn-vulkan achieved with SWIG
+Home-page: https://github.com/media2x/rife-ncnn-vulkan-python
+Author: ArchieMeng
+Author-email: archiemeng@protonmail.com
+Maintainer: K4YT3X
+Maintainer-email: i@k4yt3x.com
+License: MIT
+Keywords: rife,ncnn,vulkan,swig
+Classifier: Environment :: Console
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+
 # RIFE ncnn Vulkan Python
 
 ![CI](https://github.com/ArchieMeng/rife-ncnn-vulkan-python/workflows/CI/badge.svg)
